@@ -36,11 +36,13 @@
 #import "DCTPlaceholderTextView.h"
 
 @interface DCTPlaceholderTextView ()
+- (void)dctInternal_reloadTextView;
 @end
 
 @implementation DCTPlaceholderTextView {
 	__strong UIFont *originalFont;
 	__strong UIColor *originalTextColor;
+	BOOL firstResponder;
 }
 
 @synthesize placeholderFont;
@@ -49,39 +51,57 @@
 
 - (void)setPlaceholderText:(NSString *)text {
 	placeholderText = text;
-	if (![self hasText]) self.text = text;
+	[self dctInternal_reloadTextView];
 }
 
-- (void)setPlaceholderFont:(UIFont *)f {
-	placeholderFont = f;
-	if (![self hasText]) self.placeholderText = self.placeholderText;
+- (UIFont *)placeholderFont {
+	if (!placeholderFont) return self.font;
+	
+	return placeholderFont;
 }
 
-- (void)setPlaceholderTextColor:(UIColor *)color {
-	placeholderTextColor = color;
-	if (![self hasText]) self.placeholderText = self.placeholderText;
+- (void)setPlaceholderFont:(UIFont *)font {
+	placeholderFont = font;
+	[self dctInternal_reloadTextView];
+}
+
+- (UIColor *)placeholderTextColor {
+	if (!placeholderTextColor) return self.textColor;
+	
+	return placeholderTextColor;
+}
+
+- (void)setPlaceholderTextColor:(UIColor *)textColor {
+	placeholderTextColor = textColor;
+	[self dctInternal_reloadTextView];
+}
+
+- (void)setFont:(UIFont *)font {
+	originalFont = font;
+	[self dctInternal_reloadTextView];
+}
+
+- (void)setTextColor:(UIColor *)textColor {
+	originalTextColor = textColor;
+	[self dctInternal_reloadTextView];
 }
 
 - (BOOL)hasText {
 	return ([self.text length] > 0);
 }
 
-- (void)setText:(NSString *)text {
+- (void)dctInternal_reloadTextView {
 	
-	if (text && ([text isEqualToString:@""] || ![text isEqualToString:self.placeholderText])) {
-		self.font = originalFont;
-		self.textColor = originalTextColor;
-		[super setText:text];
+	if ([self hasText] || firstResponder) {
+		[super setText:self.text];
+		[super setFont:originalFont];
+		[super setTextColor:originalTextColor];
 		return;
 	}
 	
-	originalFont = self.font;
-	if (self.placeholderFont) self.font = self.placeholderFont;
-		
-	originalTextColor = self.textColor;
-	if (self.placeholderTextColor) self.textColor = self.placeholderTextColor;
-		
 	[super setText:self.placeholderText];
+	[super setFont:self.placeholderFont];
+	[super setTextColor:self.placeholderTextColor];
 }
 
 - (NSString *)text {
@@ -93,16 +113,14 @@
 }
 
 - (BOOL)becomeFirstResponder {
-	
-	if (![self hasText]) self.text = @"";
-	
+	firstResponder = YES;
+	[self dctInternal_reloadTextView];
 	return [super becomeFirstResponder];
 }
 
 - (BOOL)resignFirstResponder {
-	
-	self.placeholderText = self.placeholderText;
-	
+	firstResponder = NO;
+	[self dctInternal_reloadTextView];
 	return [super resignFirstResponder];
 }
 
