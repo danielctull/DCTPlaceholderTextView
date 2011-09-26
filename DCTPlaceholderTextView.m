@@ -63,7 +63,7 @@
 }
 
 - (BOOL)hasText {
-	return (self.text != nil && [self.text length] > 0);
+	return ([self.text length] > 0);
 }
 
 - (void)setText:(NSString *)text {
